@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Datum Keycloak API - Explicación del Proyecto</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        section {
+            margin-bottom: 40px;
+        }
+
+        h2 {
+            color: #2a5298;
+            font-size: 2em;
+            margin-bottom: 20px;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        h3 {
+            color: #1e3c72;
+            font-size: 1.4em;
+            margin-top: 25px;
+            margin-bottom: 15px;
+        }
+
+        p {
+            color: #333;
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+
+        ul, ol {
+            margin-left: 30px;
+            margin-bottom: 20px;
+        }
+
+        li {
+            margin-bottom: 10px;
+            color: #444;
+        }
+
+        .tech-stack {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .tech-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            transition: transform 0.3s;
+        }
+
+        .tech-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .tech-card h4 {
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .endpoint-box {
+            background: #f5f5f5;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+
+        .endpoint-box code {
+            background: #2a5298;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .feature-list {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 25px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .highlight {
+            background: #fff3cd;
+            padding: 20px;
+            border-left: 5px solid #ffc107;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+
+        footer {
+            background: #1e3c72;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            font-size: 0.9em;
+        }
+
+        .architecture-diagram {
+            background: white;
+            border: 2px solid #667eea;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.8em;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .tech-stack {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔐 Datum Keycloak API</h1>
+            <p>API de Autenticación y Autorización con Keycloak</p>
+        </header>
+
+        <div class="content">
+            <section id="descripcion">
+                <h2>📋 Descripción del Proyecto</h2>
+                <p>
+                    <strong>Datum Keycloak API</strong> es una API REST desarrollada con Quarkus (framework Java supersónico y subatómico)
+                    que proporciona servicios de autenticación y autorización integrándose con Keycloak, un servidor de gestión de
+                    identidades y accesos de código abierto.
+                </p>
+                <p>
+                    Este proyecto actúa como intermediario entre aplicaciones cliente (como aplicaciones web de React) y el servidor
+                    de Keycloak, facilitando el proceso de login y gestión de tokens de autenticación de manera segura y eficiente.
+                </p>
+            </section>
+
+            <section id="objetivo">
+                <h2>🎯 Objetivo Principal</h2>
+                <div class="highlight">
+                    <strong>Objetivo:</strong> Proporcionar un servicio de autenticación centralizado que permita a las aplicaciones
+                    cliente autenticar usuarios contra Keycloak y obtener tokens JWT (JSON Web Tokens) para acceder a recursos protegidos.
+                </div>
+            </section>
+
+            <section id="funcionalidad">
+                <h2>⚙️ ¿Qué Hace Este Proyecto?</h2>
+
+                <h3>Funcionalidades Principales:</h3>
+                <div class="feature-list">
+                    <ul>
+                        <li><strong>Autenticación de Usuarios:</strong> Permite a los usuarios iniciar sesión con sus credenciales (usuario y contraseña).</li>
+                        <li><strong>Integración con Keycloak:</strong> Se comunica con el servidor Keycloak para validar credenciales y obtener tokens.</li>
+                        <li><strong>Gestión de Tokens JWT:</strong> Maneja tokens de acceso y tokens de actualización (refresh tokens).</li>
+                        <li><strong>Extracción de Información de Usuario:</strong> Obtiene y devuelve información básica del usuario autenticado.</li>
+                        <li><strong>Manejo de Respuestas:</strong> Proporciona respuestas estructuradas tanto para casos de éxito como de error.</li>
+                    </ul>
+                </div>
+
+                <h3>Endpoints Disponibles:</h3>
+
+                <div class="endpoint-box">
+                    <strong>POST</strong> <code>/auth/login</code>
+                    <p style="margin-top: 10px;">
+                        <strong>Función:</strong> Autenticar usuarios con Keycloak.<br>
+                        <strong>Entrada:</strong> JSON con username y password<br>
+                        <strong>Salida:</strong> Token de acceso, refresh token, información del usuario
+                    </p>
+                </div>
+
+                <div class="endpoint-box">
+                    <strong>GET</strong> <code>/auth/hello</code>
+                    <p style="margin-top: 10px;">
+                        <strong>Función:</strong> Endpoint de prueba que devuelve "Hello, world!"<br>
+                        <strong>Uso:</strong> Verificar que el servicio está funcionando
+                    </p>
+                </div>
+            </section>
+
+            <section id="arquitectura">
+                <h2>🏗️ Arquitectura del Sistema</h2>
+
+                <div class="architecture-diagram">
+                    <pre style="text-align: left; font-family: monospace; color: #2a5298;">
+    ┌─────────────────┐
+    │  Cliente Web    │
+    │  (React App)    │
+    └────────┬────────┘
+             │ HTTP Request
+             │ (username/password)
+             ↓
+    ┌─────────────────────┐
+    │  Datum Keycloak     │
+    │      API            │
+    │   (Quarkus)         │
+    │                     │
+    │  ┌─────────────┐    │
+    │  │AuthResource │    │
+    │  └──────┬──────┘    │
+    │         │           │
+    │  ┌──────↓──────┐    │
+    │  │KeycloakClient│   │
+    │  └─────────────┘    │
+    └──────────┬──────────┘
+               │ OIDC Protocol
+               │ (OpenID Connect)
+               ↓
+    ┌─────────────────────┐
+    │   Keycloak Server   │
+    │  (Identity Provider)│
+    └─────────────────────┘
+                    </pre>
+                </div>
+
+                <h3>Flujo de Autenticación:</h3>
+                <ol>
+                    <li>El usuario envía sus credenciales (username/password) al endpoint <code>/auth/login</code></li>
+                    <li>La API recibe la petición en <code>AuthResource</code></li>
+                    <li><code>KeycloakClient</code> se comunica con el servidor Keycloak usando el protocolo OpenID Connect</li>
+                    <li>Keycloak valida las credenciales y devuelve tokens JWT si son correctas</li>
+                    <li>La API extrae información del usuario del token</li>
+                    <li>Se construye una respuesta <code>AuthResponse</code> con:
+                        <ul>
+                            <li>Token de acceso (access_token)</li>
+                            <li>Token de actualización (refresh_token)</li>
+                            <li>Información del usuario (UserInfo)</li>
+                            <li>Tiempo de expiración</li>
+                        </ul>
+                    </li>
+                    <li>La respuesta se envía de vuelta al cliente</li>
+                </ol>
+            </section>
+
+            <section id="tecnologias">
+                <h2>🛠️ Tecnologías Utilizadas</h2>
+
+                <div class="tech-stack">
+                    <div class="tech-card">
+                        <h4>Java 17</h4>
+                        <p>Lenguaje de programación base</p>
+                    </div>
+                    <div class="tech-card">
+                        <h4>Quarkus 3.28.1</h4>
+                        <p>Framework Java supersónico</p>
+                    </div>
+                    <div class="tech-card">
+                        <h4>Keycloak</h4>
+                        <p>Servidor de identidad y acceso</p>
+                    </div>
+                    <div class="tech-card">
+                        <h4>OIDC</h4>
+                        <p>Protocolo OpenID Connect</p>
+                    </div>
+                    <div class="tech-card">
+                        <h4>REST</h4>
+                        <p>API RESTful con Jackson</p>
+                    </div>
+                    <div class="tech-card">
+                        <h4>Maven</h4>
+                        <p>Gestión de dependencias</p>
+                    </div>
+                    <div class="tech-card">
+                        <h4>Reactive</h4>
+                        <p>Programación reactiva con Mutiny</p>
+                    </div>
+                    <div class="tech-card">
+                        <h4>JWT</h4>
+                        <p>JSON Web Tokens</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="componentes">
+                <h2>📦 Componentes Principales</h2>
+
+                <h3>1. AuthResource</h3>
+                <p>
+                    Controlador REST que expone los endpoints de autenticación. Maneja las peticiones HTTP y coordina
+                    la comunicación con Keycloak a través del cliente REST.
+                </p>
+
+                <h3>2. KeycloakClient</h3>
+                <p>
+                    Cliente REST reactivo que se comunica con el servidor Keycloak. Utiliza el protocolo OpenID Connect
+                    para obtener tokens de autenticación.
+                </p>
+
+                <h3>3. LoginRequest</h3>
+                <p>
+                    Modelo de datos que representa la petición de login (contiene username y password).
+                </p>
+
+                <h3>4. AuthResponse</h3>
+                <p>
+                    Modelo de respuesta que incluye el resultado de la autenticación, tokens y información del usuario.
+                </p>
+
+                <h3>5. TokenResponse</h3>
+                <p>
+                    Modelo que representa la respuesta de Keycloak con los tokens JWT.
+                </p>
+
+                <h3>6. UserInfo</h3>
+                <p>
+                    Modelo que contiene información del usuario autenticado (id, username, email, roles).
+                </p>
+            </section>
+
+            <section id="ventajas">
+                <h2>✨ Ventajas del Proyecto</h2>
+                <ul>
+                    <li><strong>Alto Rendimiento:</strong> Quarkus ofrece tiempos de arranque ultrarrápidos y bajo consumo de memoria</li>
+                    <li><strong>Programación Reactiva:</strong> Uso de Mutiny para operaciones no bloqueantes y mejor escalabilidad</li>
+                    <li><strong>Seguridad:</strong> Integración con Keycloak, un sistema de autenticación robusto y probado</li>
+                    <li><strong>Estándar de Industria:</strong> Implementación de OpenID Connect y OAuth 2.0</li>
+                    <li><strong>Desarrollo Rápido:</strong> Hot reload en modo desarrollo para mayor productividad</li>
+                    <li><strong>Cloud Native:</strong> Optimizado para entornos de contenedores y Kubernetes</li>
+                    <li><strong>Mantenible:</strong> Código limpio y bien estructurado con separación de responsabilidades</li>
+                </ul>
+            </section>
+
+            <section id="uso">
+                <h2>🚀 Cómo Usar el Proyecto</h2>
+
+                <h3>Modo Desarrollo:</h3>
+                <div class="endpoint-box">
+                    <code>./mvnw quarkus:dev</code>
+                    <p style="margin-top: 10px;">Inicia la aplicación en modo desarrollo con live reload</p>
+                </div>
+
+                <h3>Empaquetar Aplicación:</h3>
+                <div class="endpoint-box">
+                    <code>./mvnw package</code>
+                    <p style="margin-top: 10px;">Genera un JAR ejecutable</p>
+                </div>
+
+                <h3>Ejecutar Aplicación:</h3>
+                <div class="endpoint-box">
+                    <code>java -jar target/quarkus-app/quarkus-run.jar</code>
+                    <p style="margin-top: 10px;">Ejecuta la aplicación empaquetada</p>
+                </div>
+
+                <h3>Ejemplo de Petición de Login:</h3>
+                <div class="endpoint-box">
+                    <pre style="margin-top: 10px; overflow-x: auto;">
+POST http://localhost:8080/auth/login
+Content-Type: application/json
+
+{
+  "username": "usuario",
+  "password": "contraseña"
+}
+                    </pre>
+                </div>
+
+                <h3>Ejemplo de Respuesta Exitosa:</h3>
+                <div class="endpoint-box">
+                    <pre style="margin-top: 10px; overflow-x: auto;">
+{
+  "success": true,
+  "accessToken": "eyJhbGciOiJSUzI1NiIsInR5cC...",
+  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cC...",
+  "tokenType": "Bearer",
+  "expiresIn": 300,
+  "userInfo": {
+    "id": "user_123456",
+    "username": "usuario",
+    "email": "usuario@example.com",
+    "roles": ["basic", "user"]
+  }
+}
+                    </pre>
+                </div>
+            </section>
+
+            <section id="casos-uso">
+                <h2>💼 Casos de Uso</h2>
+                <ul>
+                    <li><strong>Aplicaciones Web:</strong> Autenticación de usuarios en aplicaciones React, Angular, Vue.js</li>
+                    <li><strong>Aplicaciones Móviles:</strong> Sistema de login para apps iOS/Android</li>
+                    <li><strong>Microservicios:</strong> Servicio centralizado de autenticación en arquitecturas de microservicios</li>
+                    <li><strong>Single Sign-On (SSO):</strong> Inicio de sesión único para múltiples aplicaciones</li>
+                    <li><strong>APIs Protegidas:</strong> Control de acceso a recursos mediante tokens JWT</li>
+                </ul>
+            </section>
+
+            <section id="seguridad">
+                <h2>🔒 Aspectos de Seguridad</h2>
+                <ul>
+                    <li>Uso de tokens JWT para autenticación stateless</li>
+                    <li>Integración con Keycloak para gestión centralizada de identidades</li>
+                    <li>Implementación del protocolo OpenID Connect (OIDC)</li>
+                    <li>Refresh tokens para renovación segura de sesiones</li>
+                    <li>Manejo seguro de credenciales (nunca se almacenan en la API)</li>
+                    <li>Respuestas de error que no revelan información sensible</li>
+                </ul>
+            </section>
+        </div>
+
+        <footer>
+            <p>Datum Keycloak API - Desarrollado con Quarkus Framework</p>
+            <p style="margin-top: 10px;">🚀 Supersonic Subatomic Java | 🔐 Seguridad y Autenticación</p>
+        </footer>
+    </div>
+</body>
+</html>

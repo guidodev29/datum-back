@@ -1,0 +1,120 @@
+version: '3.8'
+
+services:
+  # PostgreSQL para Keycloak (solo para datos internos de Keycloak)
+  postgres:
+    image: postgres:15-alpine
+    container_name: datum-postgres
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: keycloak_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - datum-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U keycloak"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Keycloak
+  keycloak:
+    image: keycloak/keycloak:26.3.4-0
+    container_name: datum-keycloak
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: keycloak_password
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_HOSTNAME_STRICT: false
+      KC_HTTP_ENABLED: true
+      KC_HOSTNAME_STRICT_HTTPS: false
+    command:
+      - start-dev
+      - --import-realm
+    volumes:
+      - ./keycloak-config:/opt/keycloak/data/import
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - datum-network
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8080 && echo -e 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && cat <&3 | grep -q '200 OK'"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
+  # API de Quarkus
+  datum-api:
+    build:
+      context: ./datum-keycloak-api
+      dockerfile: Dockerfile
+    container_name: datum-api
+    environment:
+      QUARKUS_OIDC_AUTH_SERVER_URL: http://keycloak:8080/realms/datum
+      QUARKUS_OIDC_CLIENT_ID: datum-quarkus-api
+      QUARKUS_OIDC_CLIENT_SECRET: uLDPvOcBwgQEh6njNcTjZCnFnEvXgalA
+      QUARKUS_REST_CLIENT_KEYCLOAK_API_URL: http://keycloak:8080
+      QUARKUS_HTTP_PORT: 8082
+      QUARKUS_HTTP_CORS: true
+      QUARKUS_HTTP_CORS_ORIGINS: "*"
+    ports:
+      - "8082:8082"
+    #depends_on:
+     # keycloak:
+      #  condition: service_healthy
+    networks:
+      - datum-network
+
+  # OpenKM - Sistema de Gestión Documental
+  openkm:
+    image: openkm/openkm-ce:latest
+    container_name: datum-openkm
+    environment:
+      - DB_HOST=postgres-openkm
+      - DB_NAME=openkm
+      - DB_USER=openkm
+      - DB_PASS=openkm_password
+    ports:
+      - "8090:8080"
+    depends_on:
+      postgres-openkm:
+        condition: service_healthy
+    volumes:
+      - openkm_data:/opt/openkm/repository
+    networks:
+      - datum-network
+
+  # PostgreSQL para OpenKM
+  postgres-openkm:
+    image: postgres:15-alpine
+    container_name: datum-postgres-openkm
+    environment:
+      POSTGRES_DB: openkm
+      POSTGRES_USER: openkm
+      POSTGRES_PASSWORD: openkm_password
+    volumes:
+      - postgres_openkm_data:/var/lib/postgresql/data
+    networks:
+      - datum-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U openkm"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  datum-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  postgres_openkm_data:
+  openkm_data:

@@ -1,0 +1,25 @@
+# Build outputs (don't copy these to Docker)
+target/
+*.class
+
+# IDE files
+.idea/
+.vscode/
+.settings/
+.classpath
+.project
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Logs
+*.log
+
+# Other
+*.tmp
+*.bak
