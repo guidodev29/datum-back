@@ -1,0 +1,65 @@
+# Compiled files
+*.class
+target/
+build/
+*.jar
+*.war
+*.ear
+
+# IDE files - ROOT LEVEL
+.vscode/
+.idea/
+*.iml
+.project
+.classpath
+.settings/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+logs/
+
+# Quarkus
+.quarkus/
+
+# Environment files
+.env
+*.env
+
+# Application properties with secrets
+**/application.properties
+!**/application.properties.template
+
+# Database files
+*.db
+*.sqlite
+
+# Secrets
+**/secrets/
+**/*-secret.*
+**/*secret*
+**/*password*
+client-secret.txt
+credentials.json
+
+# Docker volumes
+docker-volumes/
+data/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Maven
+.mvn/
+mvnw
+mvnw.cmd
+.mvn/wrapper/maven-wrapper.jar

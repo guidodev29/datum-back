@@ -1,0 +1,48 @@
+# Datum API Configuration Template
+# Copy this to application.properties and fill in your values
+
+# Keycloak OIDC
+quarkus.oidc.auth-server-url=http://localhost:8080/realms/datum
+quarkus.oidc.client-id=datum-quarkus-api
+quarkus.oidc.credentials.secret=CHANGE_ME_GET_FROM_KEYCLOAK
+
+# Server
+quarkus.http.port=8082
+
+# Logging
+quarkus.log.level=INFO
+quarkus.log.category."io.quarkus.oidc".level=DEBUG
+
+# CORS
+quarkus.http.cors=true
+quarkus.http.cors.origins=http://localhost:3000
+
+# REST Client for Keycloak
+quarkus.rest-client."keycloak-api".url=http://localhost:8080
+quarkus.rest-client."keycloak-api".scope=jakarta.inject.Singleton
+
+# Authentication Permissions
+quarkus.http.auth.permission.public.paths=/hello,/health,/auth/*
+quarkus.http.auth.permission.public.policy=permit
+quarkus.http.auth.permission.authenticated.paths=/api/*
+quarkus.http.auth.permission.authenticated.policy=authenticated
+
+# Database Configuration
+quarkus.datasource.db-kind=oracle
+quarkus.datasource.username=C##DATUM
+quarkus.datasource.password=CHANGE_ME
+quarkus.datasource.jdbc.url=jdbc:oracle:thin:@localhost:1521:XE
+
+# Hibernate
+quarkus.hibernate-orm.database.generation=none
+quarkus.hibernate-orm.log.sql=true
+quarkus.hibernate-orm.sql-load-script=no-file
+quarkus.hibernate-orm.database.default-schema=C##DATUM
+
+# Keycloak Admin API
+quarkus.rest-client."keycloak-admin-api".url=http://localhost:8080
+quarkus.rest-client."keycloak-admin-api".scope=jakarta.inject.Singleton
+
+# Keycloak Admin Credentials
+keycloak.admin.username=admin
+keycloak.admin.password=CHANGE_ME

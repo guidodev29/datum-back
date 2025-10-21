@@ -36,6 +36,8 @@ public class AuthResponse {
     /** Indica si el usuario existe en el sistema */
     public boolean userExists;
 
+    public boolean passwordChangeRequired;
+
     /**
      * Constructor para autenticación exitosa.
      * Establece success = true, userExists = true y mensaje automático de éxito.
