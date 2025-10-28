@@ -8,7 +8,6 @@ import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
 import io.smallrye.mutiny.Uni;
 
-import java.util.List;
 import java.util.Map;
 
 @RegisterRestClient(configKey = "keycloak-admin-api")
