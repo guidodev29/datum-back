@@ -32,13 +32,12 @@ logs/
 # Environment files with secrets
 .env
 *.env
-application-local.properties
-*-local.properties
 
-# Application properties with secrets
+# Ignore application.properties with secrets
 src/main/resources/application.properties
-datum-keycloak-api/src/main/resources/application.properties
-**/application.properties
+
+# But keep the template
+!src/main/resources/application.properties.template
 
 # Database files
 *.db

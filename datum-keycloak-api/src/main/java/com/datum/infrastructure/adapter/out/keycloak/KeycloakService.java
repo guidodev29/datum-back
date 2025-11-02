@@ -9,6 +9,7 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 import java.util.List;
+import java.util.Map;
 
 @ApplicationScoped
 public class KeycloakService {
@@ -92,24 +93,34 @@ public class KeycloakService {
 
     private void assignEmployeeRole(String userId, String authHeader) {
     try {
-        // Role representation
-        java.util.Map<String, Object> roleRepresentation = new java.util.HashMap<>();
-        roleRepresentation.put("id", "employee"); // Role name
-        roleRepresentation.put("name", "employee");
+        // 1️⃣ Get the employee role to retrieve its UUID
+        Map<String, Object> employeeRole = keycloakAdminClient.getRoleByName(
+            authHeader,
+            "employee"
+        );
         
-        // Assign role to user
+        System.out.println("✅ Found employee role: " + employeeRole);
+        
+        // 2️⃣ Assign the role using the complete role object
         Response roleResponse = keycloakAdminClient.assignRole(
             authHeader,
             userId,
-            List.of(roleRepresentation)
+            List.of(employeeRole)
         );
         
         System.out.println("Role assignment status: " + roleResponse.getStatus());
         
+        if (roleResponse.getStatus() == 204) {
+            System.out.println("✅ Employee role assigned successfully!");
+        } else {
+            System.err.println("❌ Failed to assign role. Status: " + roleResponse.getStatus());
+        }
+        
     } catch (Exception e) {
-        System.err.println("Error assigning employee role: " + e.getMessage());
-        // Don't fail user creation if role assignment fails
+        System.err.println("❌ Error assigning employee role: " + e.getMessage());
+        e.printStackTrace();
     }
+
 }
 
     /**
