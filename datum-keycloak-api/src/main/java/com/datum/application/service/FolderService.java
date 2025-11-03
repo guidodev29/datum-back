@@ -45,6 +45,11 @@ public class FolderService implements FolderUseCasePort {
     }
 
     @Override
+    public List<Folder> getFoldersUnderReview() {
+        return folderRepository.findByStatus(com.datum.domain.model.FolderStatus.UNDER_REVIEW);
+    }
+
+    @Override
     public Folder updateFolder(Long id, Folder folder) {
         Folder existing = getFolderById(id);
 
@@ -74,5 +79,10 @@ public class FolderService implements FolderUseCasePort {
         }
 
         folderRepository.deleteById(id);
+    }
+
+    // Method to update folder status without edit validation
+    public Folder updateFolderStatus(Folder folder) {
+        return folderRepository.save(folder);
     }
 }
