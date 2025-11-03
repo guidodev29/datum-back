@@ -62,6 +62,24 @@ public class Purchase {
     }
 
     /**
+     * Check if purchase can be submitted for review
+     * Only DRAFT purchases can be submitted
+     */
+    public boolean canSubmitForReview() {
+        return "DRAFT".equals(this.validationStatus);
+    }
+
+    /**
+     * Submit purchase for review
+     */
+    public void submitForReview() {
+        if (!canSubmitForReview()) {
+            throw new IllegalStateException("Cannot submit purchase with status: " + this.validationStatus);
+        }
+        this.validationStatus = "UNDER_REVIEW";
+    }
+
+    /**
      * Validate purchase amount is positive
      */
     public void validateAmount() {
