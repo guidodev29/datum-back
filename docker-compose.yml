@@ -58,6 +58,7 @@ services:
       dockerfile: Dockerfile
     container_name: datum-api
     environment:
+      TZ: America/El_Salvador
       QUARKUS_OIDC_AUTH_SERVER_URL: http://keycloak:8080/realms/datum
       QUARKUS_OIDC_CLIENT_ID: datum-quarkus-api
       QUARKUS_OIDC_CLIENT_SECRET: uLDPvOcBwgQEh6njNcTjZCnFnEvXgalA
