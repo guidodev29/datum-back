@@ -48,7 +48,7 @@ public class UserFolderResource {
     }
 
     @GET
-    @RolesAllowed({"administrator", "employee"})
+    @RolesAllowed({"administrator", "employee", "finance"})
     public Response getUserFolders(@PathParam("userId") Long userId) {
         List<FolderResponse> folders = folderService.getFoldersByUserId(userId).stream()
             .map(this::toResponse)
@@ -59,7 +59,7 @@ public class UserFolderResource {
 
     @GET
     @Path("/{folderId}")
-    @RolesAllowed({"administrator", "employee"})
+    @RolesAllowed({"administrator", "employee", "finance"})
     public Response getFolderById(
         @PathParam("userId") Long userId,
         @PathParam("folderId") Long folderId
