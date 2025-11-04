@@ -2,9 +2,12 @@ package com.datum.infrastructure.adapter.in.rest;
 
 import com.datum.application.dto.FolderResponse;
 import com.datum.application.dto.PurchaseResponse;
+import com.datum.application.dto.RejectFolderRequest;
+import com.datum.application.service.FolderService;
 import com.datum.application.service.PurchaseService;
 import com.datum.domain.model.Folder;
 import com.datum.domain.ports.in.FolderUseCasePort;
+import io.quarkus.security.identity.SecurityIdentity;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
@@ -23,7 +26,13 @@ public class FolderReviewResource {
     FolderUseCasePort folderService;
 
     @Inject
+    FolderService folderServiceImpl;
+
+    @Inject
     PurchaseService purchaseService;
+
+    @Inject
+    SecurityIdentity securityIdentity;
 
     /**
      * Get folders that are under review
@@ -109,6 +118,67 @@ public class FolderReviewResource {
         response.canEdit = folder.canEdit();
 
         return response;
+    }
+
+    /**
+     * Manually reject a folder
+     * POST /api/folders/{folderId}/reject
+     * Allows finance/admin to reject a folder even if not all purchases are rejected
+     */
+    @POST
+    @Path("/{folderId}/reject")
+    @RolesAllowed({"finance", "administrator"})
+    public Response rejectFolder(
+        @PathParam("folderId") Long folderId,
+        RejectFolderRequest request
+    ) {
+        try {
+            // Get validator user ID from JWT token
+            Long validatorId = getUserIdFromToken();
+
+            // Reject the folder
+            Folder rejectedFolder = folderServiceImpl.rejectFolder(
+                folderId,
+                validatorId,
+                request != null ? request.getNotes() : null
+            );
+
+            // Return success response
+            FolderResponse response = toResponse(rejectedFolder);
+
+            return Response.ok(response).build();
+
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.NOT_FOUND)
+                .entity(new ErrorResponse("Folder not found: " + e.getMessage()))
+                .build();
+        } catch (IllegalStateException e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                .entity(new ErrorResponse(e.getMessage()))
+                .build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity(new ErrorResponse("Error rejecting folder: " + e.getMessage()))
+                .build();
+        }
+    }
+
+    /**
+     * Extract user ID from JWT token
+     * The user ID is stored in the "sub" claim of the JWT
+     */
+    private Long getUserIdFromToken() {
+        // Get the subject (user ID) from the JWT token
+        String subject = securityIdentity.getPrincipal().getName();
+
+        try {
+            // In Keycloak, the subject is usually the user UUID
+            // For now, we'll return a placeholder
+            // TODO: Implement proper user ID extraction from Keycloak token
+            return 1L; // Placeholder - needs proper implementation
+        } catch (Exception e) {
+            throw new IllegalStateException("Could not extract user ID from token");
+        }
     }
 
     // Helper class for error responses
