@@ -19,6 +19,7 @@ public class CreateUserRequest {
     private String email;
     
     private String keycloakId;
+    private String role; // Role to assign in Keycloak (employee, administrator, finance, etc.)
 
     // Constructors
     public CreateUserRequest() {}
@@ -46,4 +47,10 @@ public class CreateUserRequest {
 
     public String getKeycloakId() { return keycloakId; }
     public void setKeycloakId(String keycloakId) { this.keycloakId = keycloakId; }
+
+    public String getRole() { return role; }
+    public void setRole(String role) { this.role = role; }
+
+
 }
+

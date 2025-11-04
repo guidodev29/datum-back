@@ -6,7 +6,8 @@ import java.util.Optional;
 
 public interface UserUseCasePort {
     
-    User createUser(String firstName, String lastName, String nickname, String email, String keycloakId);
+    User createUser(String firstName, String lastName, String nickname, String email, String keycloakId, String role);
+
     
     Optional<User> getUserById(Long id);
     

@@ -11,34 +11,41 @@ import java.util.Map;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
 @RegisterRestClient(configKey = "keycloak-admin-api")
-@Path("/admin/realms/datum/users")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface KeycloakAdminClient {
 
     @POST
+    @Path("/admin/realms/datum/users")
     Response createUser(
         @HeaderParam("Authorization") String authorization,
         KeycloakUserRequest userRequest
     );
 
     @GET
-    @Path("/{userId}")
+    @Path("/admin/realms/datum/users/{userId}")
     Response getUser(
         @HeaderParam("Authorization") String authorization,
         @PathParam("userId") String userId
     );
 
     @PUT
-    @Path("/{userId}/reset-password")
+    @Path("/admin/realms/datum/users/{userId}/reset-password")
     Response resetPassword(
         @HeaderParam("Authorization") String authorization,
         @PathParam("userId") String userId,
         KeycloakUserRequest.CredentialRepresentation credential
     );
 
+    @GET
+    @Path("/admin/realms/datum/roles/{roleName}")
+    Map<String, Object> getRoleByName(
+        @HeaderParam("Authorization") String authorization,
+        @PathParam("roleName") String roleName
+    );
+
     @POST
-    @Path("/users/{userId}/role-mappings/realm")
+    @Path("/admin/realms/datum/users/{userId}/role-mappings/realm")
     Response assignRole(
         @HeaderParam("Authorization") String authorization,
         @PathParam("userId") String userId,

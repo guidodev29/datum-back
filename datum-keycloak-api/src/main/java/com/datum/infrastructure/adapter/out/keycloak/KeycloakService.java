@@ -31,7 +31,7 @@ public class KeycloakService {
      * Creates a user in Keycloak with a temporary password
      * @return Keycloak user ID if successful, null otherwise
      */
-    public String createUser(String email, String firstName, String lastName, String temporaryPassword) {
+    public String createUser(String email, String firstName, String lastName, String temporaryPassword, String role) {
         try {
             // Create user request
             KeycloakUserRequest userRequest = new KeycloakUserRequest();
@@ -74,8 +74,9 @@ public class KeycloakService {
                 keycloakUserId = location.substring(location.lastIndexOf('/') + 1);
                 System.out.println("User created in Keycloak with ID: " + keycloakUserId);
                 
-                // Assign employee role
-                assignEmployeeRole(keycloakUserId, authHeader);
+                // Assign role (default to employee if not provided)
+                String roleToAssign = (role != null && !role.isEmpty()) ? role : "employee";
+                assignRole(keycloakUserId, roleToAssign, authHeader);
                 
                 return keycloakUserId;
             } else {
@@ -90,24 +91,44 @@ public class KeycloakService {
         }
     }
 
-    private void assignEmployeeRole(String userId, String authHeader) {
+    private void assignRole(String userId, String roleName, String authHeader) {
     try {
-        // Role representation
+        // First, get the role details from Keycloak to obtain the role UUID
+        System.out.println("Fetching role details for: " + roleName);
+        java.util.Map<String, Object> roleDetails = keycloakAdminClient.getRoleByName(authHeader, roleName);
+
+        if (roleDetails == null || !roleDetails.containsKey("id")) {
+            System.err.println("Role not found in Keycloak: " + roleName);
+            return;
+        }
+
+        // Extract role ID and name from the response
+        String roleId = (String) roleDetails.get("id");
+        System.out.println("Role '" + roleName + "' found with ID: " + roleId);
+
+        // Create role representation with the correct ID
         java.util.Map<String, Object> roleRepresentation = new java.util.HashMap<>();
-        roleRepresentation.put("id", "employee"); // Role name
-        roleRepresentation.put("name", "employee");
-        
+        roleRepresentation.put("id", roleId);
+        roleRepresentation.put("name", roleName);
+
         // Assign role to user
         Response roleResponse = keycloakAdminClient.assignRole(
             authHeader,
             userId,
             List.of(roleRepresentation)
         );
-        
-        System.out.println("Role assignment status: " + roleResponse.getStatus());
-        
+
+        System.out.println("Role assignment status for '" + roleName + "': " + roleResponse.getStatus());
+
+        if (roleResponse.getStatus() == 204) {
+            System.out.println("Successfully assigned role '" + roleName + "' to user");
+        } else {
+            System.err.println("Failed to assign role. Status: " + roleResponse.getStatus());
+        }
+
     } catch (Exception e) {
-        System.err.println("Error assigning employee role: " + e.getMessage());
+        System.err.println("Error assigning role " + roleName + ": " + e.getMessage());
+        e.printStackTrace();
         // Don't fail user creation if role assignment fails
     }
 }

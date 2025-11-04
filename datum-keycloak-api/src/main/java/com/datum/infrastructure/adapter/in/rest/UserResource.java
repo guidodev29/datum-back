@@ -58,13 +58,14 @@ public class UserResource {
     @RolesAllowed({"administrator"})
     public Response createUser(@Valid CreateUserRequest request) {
         try {
-            // Create user (which now also creates in Keycloak)
+            // Create user (which now also creates in Keycloak with specified role)
             User user = userUseCase.createUser(
                 request.getFirstName(),
                 request.getLastName(),
                 request.getNickname(),
                 request.getEmail(),
-                request.getKeycloakId()
+                request.getKeycloakId(),
+                request.getRole()
             );
             
             // Generate the temporary password again to show to admin
