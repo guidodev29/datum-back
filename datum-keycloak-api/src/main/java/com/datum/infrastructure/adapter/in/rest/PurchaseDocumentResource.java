@@ -243,7 +243,7 @@ public class PurchaseDocumentResource {
     @GET
     @Path("/{purchaseId}/document")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
-    @RolesAllowed({"employee", "administrator"})
+    @RolesAllowed({"employee", "administrator", "finance"})
     public Response downloadDocument(@PathParam("purchaseId") Long purchaseId) {
         try {
             // 1. Get purchase

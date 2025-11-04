@@ -123,4 +123,32 @@ public class PurchaseService implements PurchaseUseCasePort {
         purchase.setImgUrl(null);
         purchaseRepository.save(purchase);
     }
+
+    /**
+     * Submit all purchases in a folder for review
+     * Changes status from DRAFT to UNDER_REVIEW
+     */
+    @Transactional
+    public int submitFolderForReview(Long folderId) {
+        List<Purchase> purchases = purchaseRepository.findByFolderId(folderId);
+
+        if (purchases.isEmpty()) {
+            throw new IllegalArgumentException("No purchases found in folder: " + folderId);
+        }
+
+        int submittedCount = 0;
+        for (Purchase purchase : purchases) {
+            if (purchase.canSubmitForReview()) {
+                purchase.submitForReview();
+                purchaseRepository.save(purchase);
+                submittedCount++;
+            }
+        }
+
+        if (submittedCount == 0) {
+            throw new IllegalStateException("No DRAFT purchases found to submit in folder");
+        }
+
+        return submittedCount;
+    }
 }

@@ -24,6 +24,17 @@ public class Folder {
         return this.validationStatus == FolderStatus.DRAFT;
     }
 
+    public boolean canSubmitForReview() {
+        return this.validationStatus == FolderStatus.DRAFT;
+    }
+
+    public void submitForReview() {
+        if (!canSubmitForReview()) {
+            throw new IllegalStateException("Cannot submit folder with status: " + this.validationStatus);
+        }
+        this.validationStatus = FolderStatus.UNDER_REVIEW;
+    }
+
     public void validateDateRange() {
         if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
             throw new IllegalArgumentException("Start date must be before end date");
