@@ -50,6 +50,11 @@ public class FolderService implements FolderUseCasePort {
     }
 
     @Override
+    public List<Folder> getFoldersUnderReviewByUserId(Long userId) {
+        return folderRepository.findByUserIdAndStatus(userId, com.datum.domain.model.FolderStatus.UNDER_REVIEW);
+    }
+
+    @Override
     public Folder updateFolder(Long id, Folder folder) {
         Folder existing = getFolderById(id);
 

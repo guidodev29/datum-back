@@ -9,6 +9,7 @@ public interface FolderUseCasePort {
     List<Folder> getAllFolders();
     List<Folder> getFoldersByUserId(Long userId);
     List<Folder> getFoldersUnderReview();
+    List<Folder> getFoldersUnderReviewByUserId(Long userId);
     Folder updateFolder(Long id, Folder folder);
     void deleteFolder(Long id);
     Folder updateFolderStatus(Folder folder);

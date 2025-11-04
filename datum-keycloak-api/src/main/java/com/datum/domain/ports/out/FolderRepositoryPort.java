@@ -11,6 +11,7 @@ public interface FolderRepositoryPort {
     List<Folder> findAll();
     List<Folder> findByUserId(Long userId);
     List<Folder> findByStatus(FolderStatus status);
+    List<Folder> findByUserIdAndStatus(Long userId, FolderStatus status);
     void deleteById(Long id);
     boolean existsById(Long id);
 }

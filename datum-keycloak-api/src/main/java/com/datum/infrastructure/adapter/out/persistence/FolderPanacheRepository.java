@@ -14,4 +14,8 @@ public class FolderPanacheRepository implements PanacheRepository<FolderEntity> 
     public List<FolderEntity> findByStatus(String status) {
         return list("validationStatus", status);
     }
+
+    public List<FolderEntity> findByUserIdAndStatus(Long userId, String status) {
+        return list("userId = ?1 and validationStatus = ?2", userId, status);
+    }
 }
