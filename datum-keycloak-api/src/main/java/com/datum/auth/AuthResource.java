@@ -14,6 +14,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import io.smallrye.common.annotation.Blocking;
 import io.smallrye.mutiny.Uni;
+import com.datum.application.dto.ChangePasswordRequest;
 
 import java.util.Arrays;
 
