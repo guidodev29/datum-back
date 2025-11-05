@@ -47,10 +47,10 @@ public class Purchase {
 
     /**
      * Check if purchase can be edited
-     * Only DRAFT purchases can be edited
+     * DRAFT and REJECTED purchases can be edited (to allow corrections)
      */
     public boolean canEdit() {
-        return "DRAFT".equals(this.validationStatus);
+        return "DRAFT".equals(this.validationStatus) || "REJECTED".equals(this.validationStatus);
     }
 
     /**
@@ -63,19 +63,28 @@ public class Purchase {
 
     /**
      * Check if purchase can be submitted for review
-     * Only DRAFT purchases can be submitted
+     * DRAFT and REJECTED purchases can be submitted (to allow resubmission after corrections)
      */
     public boolean canSubmitForReview() {
-        return "DRAFT".equals(this.validationStatus);
+        return "DRAFT".equals(this.validationStatus) || "REJECTED".equals(this.validationStatus);
     }
 
     /**
      * Submit purchase for review
+     * Clears validation data when resubmitting a rejected purchase
      */
     public void submitForReview() {
         if (!canSubmitForReview()) {
             throw new IllegalStateException("Cannot submit purchase with status: " + this.validationStatus);
         }
+
+        // Clear previous validation data if resubmitting
+        if ("REJECTED".equals(this.validationStatus)) {
+            this.validatedBy = null;
+            this.validatedDate = null;
+            this.validationNotes = null;
+        }
+
         this.validationStatus = "UNDER_REVIEW";
     }
 
@@ -93,7 +102,7 @@ public class Purchase {
      */
     public void setDocumentUrl(String url) {
         if (!canEdit()) {
-            throw new IllegalStateException("Cannot modify document for non-DRAFT purchase");
+            throw new IllegalStateException("Cannot modify document for purchase with status: " + this.validationStatus);
         }
         this.imgUrl = url;
     }
