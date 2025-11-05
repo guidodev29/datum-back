@@ -3,6 +3,9 @@ package com.datum.auth;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+
+import jakarta.annotation.security.PermitAll;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
@@ -16,6 +19,9 @@ import io.smallrye.common.annotation.Blocking;
 import io.smallrye.mutiny.Uni;
 
 import java.util.Arrays;
+
+import com.datum.domain.ports.out.UserRepositoryPort;
+import com.datum.domain.model.User;
 
 @Path("/auth")
 public class AuthResource {
@@ -32,6 +38,7 @@ public class AuthResource {
     @Path("/login")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @PermitAll
     public Uni<Response> login(LoginRequest loginRequest) {
 
         return keycloakClient.getToken(
@@ -71,6 +78,7 @@ public class AuthResource {
     @GET
     @Path("/hello")
     @Produces(MediaType.TEXT_PLAIN)
+    @PermitAll
     public String hello() {
         return "Hello, world!";
     }
@@ -112,7 +120,7 @@ public class AuthResource {
                 UserInfo userInfo = new UserInfo();
                 userInfo.username = extractedUsername;
                 userInfo.email = email;
-                userInfo.id = userId;
+                userInfo.id = userId; // ⭐ Just return Keycloak ID (we'll use hardcoded 81 in frontend)
                 userInfo.roles = roles.isEmpty() ? Arrays.asList("basic") : roles;
 
                 return userInfo;
@@ -228,5 +236,4 @@ public class AuthResource {
         }
     }
 
-} // ← Final closing brace for the entire AuthResource class
-    
+}
