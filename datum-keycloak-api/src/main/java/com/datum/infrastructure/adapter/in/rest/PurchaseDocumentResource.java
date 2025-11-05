@@ -279,6 +279,142 @@ public class PurchaseDocumentResource {
     }
 
     /**
+     * Update purchase and its document
+     * PUT /api/purchases/{purchaseId}/update
+     *
+     * - Can edit DRAFT and REJECTED purchases
+     * - If purchase is REJECTED, it will be reset to DRAFT after editing
+     * - Employee must resubmit the purchase for review after editing
+     * - Can update data with or without uploading a new document
+     */
+    @PUT
+    @Path("/{purchaseId}/update")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @RolesAllowed({"employee", "administrator"})
+    public Response updatePurchaseWithDocument(
+        @PathParam("purchaseId") Long purchaseId,
+        @FormParam("idPType") Long idPType,
+        @FormParam("idPaymentMethod") Long idPaymentMethod,
+        @FormParam("idCostCenter") Long idCostCenter,
+        @FormParam("totalAmount") java.math.BigDecimal totalAmount,
+        @FormParam("description") String description,
+        @FormParam("guestName") String guestName,
+        @FormParam("purchaseDate") String purchaseDateStr,
+        @FormParam("file") FileUpload file
+    ) {
+        try {
+            // 1. Get existing purchase
+            Purchase existingPurchase = purchaseService.getPurchaseById(purchaseId);
+
+            // 2. Validate purchase can be edited (must be DRAFT or REJECTED)
+            if (!existingPurchase.canEdit()) {
+                return Response.status(Response.Status.FORBIDDEN)
+                    .entity(new ErrorResponse("Cannot edit purchase with status: " + existingPurchase.getValidationStatus()))
+                    .build();
+            }
+
+            // 3. Prepare updated purchase data
+            Purchase updatedData = new Purchase();
+            updatedData.setIdPType(idPType);
+            updatedData.setIdPaymentMethod(idPaymentMethod);
+            updatedData.setIdCostCenter(idCostCenter);
+            updatedData.setTotalAmount(totalAmount);
+            updatedData.setDescription(description);
+            updatedData.setGuestName(guestName);
+
+            // 4. Parse purchase date if provided
+            if (purchaseDateStr != null && !purchaseDateStr.isEmpty()) {
+                try {
+                    java.time.LocalDate date = java.time.LocalDate.parse(purchaseDateStr);
+                    updatedData.setPurchaseDate(java.time.LocalDateTime.of(date, java.time.LocalTime.now()));
+                } catch (Exception e) {
+                    return Response.status(Response.Status.BAD_REQUEST)
+                        .entity(new ErrorResponse("Invalid purchaseDate format. Use format: 2025-10-30"))
+                        .build();
+                }
+            }
+
+            String newDocumentPath = null;
+            String fileName = null;
+            String mimeType = null;
+            long fileSize = 0;
+
+            // 5. Update document if file is provided
+            if (file != null) {
+                // Validate file size
+                File uploadedFile = file.uploadedFile().toFile();
+                if (uploadedFile.length() > MAX_FILE_SIZE) {
+                    return Response.status(Response.Status.BAD_REQUEST)
+                        .entity(new ErrorResponse("File size exceeds 10MB limit"))
+                        .build();
+                }
+
+                // Validate file type
+                mimeType = file.contentType();
+                if (!ALLOWED_MIME_TYPES.contains(mimeType.toLowerCase())) {
+                    return Response.status(Response.Status.BAD_REQUEST)
+                        .entity(new ErrorResponse("Only images (JPG, PNG, HEIC) and PDF files are allowed"))
+                        .build();
+                }
+
+                fileName = file.fileName();
+                fileSize = uploadedFile.length();
+
+                // Update document in OpenKM (delete old, upload new)
+                String oldDocPath = existingPurchase.getImgUrl();
+                java.time.LocalDateTime purchaseDate = updatedData.getPurchaseDate() != null
+                    ? updatedData.getPurchaseDate()
+                    : existingPurchase.getPurchaseDate();
+
+                newDocumentPath = openKMService.updateDocument(
+                    oldDocPath,
+                    purchaseId,
+                    purchaseDate,
+                    fileName,
+                    file
+                );
+            }
+
+            // 6. Update purchase in database
+            Purchase updatedPurchase = purchaseService.updatePurchaseWithDocument(
+                purchaseId,
+                updatedData,
+                newDocumentPath
+            );
+
+            // 7. Return success response
+            if (file != null) {
+                DocumentResponse response = DocumentResponse.success(
+                    purchaseId,
+                    fileName,
+                    mimeType,
+                    fileSize,
+                    newDocumentPath,
+                    "Purchase and document updated successfully"
+                );
+                return Response.ok(response).build();
+            } else {
+                return Response.ok()
+                    .entity(new SuccessResponse("Purchase updated successfully"))
+                    .build();
+            }
+
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.NOT_FOUND)
+                .entity(new ErrorResponse("Purchase not found: " + e.getMessage()))
+                .build();
+        } catch (IllegalStateException e) {
+            return Response.status(Response.Status.FORBIDDEN)
+                .entity(new ErrorResponse(e.getMessage()))
+                .build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity(new ErrorResponse("Error updating purchase: " + e.getMessage()))
+                .build();
+        }
+    }
+
+    /**
      * Delete the purchase and its attached document
      * DELETE /api/purchases/{purchaseId}/document
      */

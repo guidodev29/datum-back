@@ -87,6 +87,72 @@ public class PurchaseService implements PurchaseUseCasePort {
         return purchaseRepository.save(existing);
     }
 
+    /**
+     * Update purchase and optionally its document
+     * This method only updates the purchase data, not the document
+     * For document updates, use attachDocument separately
+     *
+     * If purchase is REJECTED, it will be reset to DRAFT status to allow corrections
+     *
+     * @param id Purchase ID
+     * @param purchase Purchase data to update
+     * @param newDocumentUrl New document URL if document was updated
+     * @return Updated purchase
+     */
+    @Transactional
+    public Purchase updatePurchaseWithDocument(Long id, Purchase purchase, String newDocumentUrl) {
+        Purchase existing = getPurchaseById(id);
+
+        // Only DRAFT and REJECTED purchases can be edited
+        if (!existing.canEdit()) {
+            throw new IllegalStateException("Cannot edit purchase with status: " + existing.getValidationStatus());
+        }
+
+        // If editing a REJECTED purchase, reset it to DRAFT status
+        // This allows employee to make corrections and resubmit
+        if ("REJECTED".equals(existing.getValidationStatus())) {
+            existing.setValidationStatus("DRAFT");
+            existing.setValidatedBy(null);
+            existing.setValidatedDate(null);
+            existing.setValidationNotes(null);
+        }
+
+        // Update purchase fields
+        if (purchase.getIdFolder() != null) {
+            existing.setIdFolder(purchase.getIdFolder());
+        }
+        if (purchase.getIdPType() != null) {
+            existing.setIdPType(purchase.getIdPType());
+        }
+        if (purchase.getIdPaymentMethod() != null) {
+            existing.setIdPaymentMethod(purchase.getIdPaymentMethod());
+        }
+        if (purchase.getIdCostCenter() != null) {
+            existing.setIdCostCenter(purchase.getIdCostCenter());
+        }
+        if (purchase.getTotalAmount() != null) {
+            existing.setTotalAmount(purchase.getTotalAmount());
+        }
+        if (purchase.getDescription() != null) {
+            existing.setDescription(purchase.getDescription());
+        }
+        if (purchase.getGuestName() != null) {
+            existing.setGuestName(purchase.getGuestName());
+        }
+        if (purchase.getPurchaseDate() != null) {
+            existing.setPurchaseDate(purchase.getPurchaseDate());
+        }
+
+        // Update document URL if provided
+        if (newDocumentUrl != null) {
+            existing.setImgUrl(newDocumentUrl);
+        }
+
+        existing.validateAmount();
+
+        return purchaseRepository.save(existing);
+    }
+
     @Override
     @Transactional
     public void deletePurchase(Long id) {

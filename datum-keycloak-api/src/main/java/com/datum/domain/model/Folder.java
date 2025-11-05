@@ -25,13 +25,21 @@ public class Folder {
     }
 
     public boolean canSubmitForReview() {
-        return this.validationStatus == FolderStatus.DRAFT;
+        return this.validationStatus == FolderStatus.DRAFT || this.validationStatus == FolderStatus.REJECTED;
     }
 
     public void submitForReview() {
         if (!canSubmitForReview()) {
             throw new IllegalStateException("Cannot submit folder with status: " + this.validationStatus);
         }
+
+        // Clear previous validation data if resubmitting a rejected folder
+        if (this.validationStatus == FolderStatus.REJECTED) {
+            this.validatedBy = null;
+            this.validatedDate = null;
+            this.validationNotes = null;
+        }
+
         this.validationStatus = FolderStatus.UNDER_REVIEW;
     }
 
