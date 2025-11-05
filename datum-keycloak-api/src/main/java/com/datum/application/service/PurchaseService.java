@@ -123,4 +123,84 @@ public class PurchaseService implements PurchaseUseCasePort {
         purchase.setImgUrl(null);
         purchaseRepository.save(purchase);
     }
+
+    /**
+     * Submit all purchases in a folder for review
+     * Changes status from DRAFT to UNDER_REVIEW
+     */
+    @Transactional
+    public int submitFolderForReview(Long folderId) {
+        List<Purchase> purchases = purchaseRepository.findByFolderId(folderId);
+
+        if (purchases.isEmpty()) {
+            throw new IllegalArgumentException("No purchases found in folder: " + folderId);
+        }
+
+        int submittedCount = 0;
+        for (Purchase purchase : purchases) {
+            if (purchase.canSubmitForReview()) {
+                purchase.submitForReview();
+                purchaseRepository.save(purchase);
+                submittedCount++;
+            }
+        }
+
+        if (submittedCount == 0) {
+            throw new IllegalStateException("No DRAFT purchases found to submit in folder");
+        }
+
+        return submittedCount;
+    }
+
+    /**
+     * Approve a purchase
+     * Changes status from UNDER_REVIEW to APPROVED
+     * @param purchaseId ID of the purchase to approve
+     * @param validatorId ID of the user approving (finance/admin)
+     * @param notes Optional notes about the approval
+     * @return The approved purchase
+     */
+    @Transactional
+    public Purchase approvePurchase(Long purchaseId, Long validatorId, String notes) {
+        Purchase purchase = getPurchaseById(purchaseId);
+
+        // Validate: can only approve UNDER_REVIEW purchases
+        if (!"UNDER_REVIEW".equals(purchase.getValidationStatus())) {
+            throw new IllegalStateException("Can only approve purchases with UNDER_REVIEW status. Current status: " + purchase.getValidationStatus());
+        }
+
+        // Update purchase status to VALIDATED (approved)
+        purchase.setValidationStatus("VALIDATED");
+        purchase.setValidatedBy(validatorId);
+        purchase.setValidatedDate(java.time.LocalDateTime.now());
+        purchase.setValidationNotes(notes);
+
+        return purchaseRepository.save(purchase);
+    }
+
+    /**
+     * Reject a purchase
+     * Changes status from UNDER_REVIEW to REJECTED
+     * @param purchaseId ID of the purchase to reject
+     * @param validatorId ID of the user rejecting (finance/admin)
+     * @param notes Optional notes about why it was rejected
+     * @return The rejected purchase
+     */
+    @Transactional
+    public Purchase rejectPurchase(Long purchaseId, Long validatorId, String notes) {
+        Purchase purchase = getPurchaseById(purchaseId);
+
+        // Validate: can only reject UNDER_REVIEW purchases
+        if (!"UNDER_REVIEW".equals(purchase.getValidationStatus())) {
+            throw new IllegalStateException("Can only reject purchases with UNDER_REVIEW status. Current status: " + purchase.getValidationStatus());
+        }
+
+        // Update purchase status to REJECTED
+        purchase.setValidationStatus("REJECTED");
+        purchase.setValidatedBy(validatorId);
+        purchase.setValidatedDate(java.time.LocalDateTime.now());
+        purchase.setValidationNotes(notes);
+
+        return purchaseRepository.save(purchase);
+    }
 }

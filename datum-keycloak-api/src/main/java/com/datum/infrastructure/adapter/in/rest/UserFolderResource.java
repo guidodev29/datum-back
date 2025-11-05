@@ -2,6 +2,7 @@ package com.datum.infrastructure.adapter.in.rest;
 
 import com.datum.application.dto.CreateFolderRequest;
 import com.datum.application.dto.FolderResponse;
+import com.datum.application.service.PurchaseService;
 import com.datum.domain.model.Folder;
 import com.datum.domain.ports.in.FolderUseCasePort;
 import jakarta.annotation.security.RolesAllowed;
@@ -21,6 +22,9 @@ public class UserFolderResource {
 
     @Inject
     FolderUseCasePort folderService;
+
+    @Inject
+    PurchaseService purchaseService;
 
     @POST
     @RolesAllowed({"administrator", "employee"})
@@ -44,7 +48,7 @@ public class UserFolderResource {
     }
 
     @GET
-    @RolesAllowed({"administrator", "employee"})
+    @RolesAllowed({"administrator", "employee", "finance"})
     public Response getUserFolders(@PathParam("userId") Long userId) {
         List<FolderResponse> folders = folderService.getFoldersByUserId(userId).stream()
             .map(this::toResponse)
@@ -55,7 +59,7 @@ public class UserFolderResource {
 
     @GET
     @Path("/{folderId}")
-    @RolesAllowed({"administrator", "employee"})
+    @RolesAllowed({"administrator", "employee", "finance"})
     public Response getFolderById(
         @PathParam("userId") Long userId,
         @PathParam("folderId") Long folderId
@@ -181,7 +185,75 @@ public class UserFolderResource {
         response.validatedBy = folder.getValidatedBy();
         response.validationNotes = folder.getValidationNotes();
         response.canEdit = folder.canEdit();
-        
+
         return response;
+    }
+
+    /**
+     * Submit all purchases in a folder for review
+     * POST /api/users/{userId}/folders/{folderId}/submit-for-review
+     */
+    @POST
+    @Path("/{folderId}/submit-for-review")
+    @RolesAllowed({"employee", "administrator"})
+    public Response submitFolderForReview(
+        @PathParam("userId") Long userId,
+        @PathParam("folderId") Long folderId
+    ) {
+        try {
+            // Verify folder exists and belongs to user
+            Folder folder = folderService.getFolderById(folderId);
+
+            if (!folder.getUserId().equals(userId)) {
+                return Response.status(Response.Status.FORBIDDEN)
+                    .entity(new ErrorResponse("Folder does not belong to this user"))
+                    .build();
+            }
+
+            // Submit all purchases in folder for review
+            int submittedCount = purchaseService.submitFolderForReview(folderId);
+
+            // Update folder status to UNDER_REVIEW
+            folder.submitForReview();
+            folderService.updateFolderStatus(folder);
+
+            return Response.ok()
+                .entity(new SubmissionResponse(
+                    "Folder submitted for review successfully",
+                    submittedCount
+                ))
+                .build();
+
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.NOT_FOUND)
+                .entity(new ErrorResponse(e.getMessage()))
+                .build();
+        } catch (IllegalStateException e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                .entity(new ErrorResponse(e.getMessage()))
+                .build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity(new ErrorResponse("Error submitting folder: " + e.getMessage()))
+                .build();
+        }
+    }
+
+    // Response DTOs
+    public static class ErrorResponse {
+        public String error;
+        public ErrorResponse(String error) {
+            this.error = error;
+        }
+    }
+
+    public static class SubmissionResponse {
+        public String message;
+        public int purchasesSubmitted;
+
+        public SubmissionResponse(String message, int purchasesSubmitted) {
+            this.message = message;
+            this.purchasesSubmitted = purchasesSubmitted;
+        }
     }
 }

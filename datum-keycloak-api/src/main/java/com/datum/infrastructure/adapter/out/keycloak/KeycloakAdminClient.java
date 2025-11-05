@@ -45,8 +45,15 @@ public interface KeycloakAdminClient {
         KeycloakUserRequest.CredentialRepresentation credential
     );
 
+    @GET
+    @Path("/admin/realms/datum/roles/{roleName}")
+    Map<String, Object> getRoleByName(
+        @HeaderParam("Authorization") String authorization,
+        @PathParam("roleName") String roleName
+    );
+
     @POST
-    @Path("/users/{userId}/role-mappings/realm")
+    @Path("/admin/realms/datum/users/{userId}/role-mappings/realm")
     Response assignRole(
         @HeaderParam("Authorization") String authorization,
         @PathParam("userId") String userId,

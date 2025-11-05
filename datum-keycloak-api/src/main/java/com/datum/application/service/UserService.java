@@ -23,7 +23,7 @@ public class UserService implements UserUseCasePort {
 
 @Override
 @Transactional
-public User createUser(String firstName, String lastName, String nickname, String email, String keycloakId) {
+public User createUser(String firstName, String lastName, String nickname, String email, String keycloakId, String role) {
     // Business validation
     if (userRepository.existsByUsername(nickname)) {
         throw new RuntimeException("Nickname already exists: " + nickname);
@@ -32,8 +32,8 @@ public User createUser(String firstName, String lastName, String nickname, Strin
     // Generate temporary password: FirstName@Datum2025
     String temporaryPassword = keycloakService.generateTemporaryPassword(firstName);
 
-    // Create user in Keycloak FIRST
-    String keycloakUserId = keycloakService.createUser(email, firstName, lastName, temporaryPassword);
+    // Create user in Keycloak FIRST with specified role
+    String keycloakUserId = keycloakService.createUser(email, firstName, lastName, temporaryPassword, role);
     
     if (keycloakUserId == null) {
         throw new RuntimeException("Failed to create user in Keycloak");

@@ -59,6 +59,13 @@ public class FolderRepositoryAdapter implements FolderRepositoryPort {
     }
 
     @Override
+    public List<Folder> findByUserIdAndStatus(Long userId, FolderStatus status) {
+        return folderPanacheRepository.findByUserIdAndStatus(userId, status.name()).stream()
+            .map(this::toDomain)
+            .collect(Collectors.toList());
+    }
+
+    @Override
     public void deleteById(Long id) {
         folderPanacheRepository.deleteById(id);
     }
