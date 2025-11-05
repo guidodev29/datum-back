@@ -9,6 +9,7 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 import java.util.List;
+import java.util.Map;
 
 @ApplicationScoped
 public class KeycloakService {
@@ -115,7 +116,7 @@ public class KeycloakService {
         Response roleResponse = keycloakAdminClient.assignRole(
             authHeader,
             userId,
-            List.of(roleRepresentation)
+            List.of(employeeRole)
         );
 
         System.out.println("Role assignment status for '" + roleName + "': " + roleResponse.getStatus());
@@ -131,6 +132,7 @@ public class KeycloakService {
         e.printStackTrace();
         // Don't fail user creation if role assignment fails
     }
+
 }
 
     /**
