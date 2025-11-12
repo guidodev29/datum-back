@@ -19,13 +19,13 @@ public class UserRepositoryAdapter implements UserRepositoryPort {
     @Override
     public User save(User user) {
         UserEntity entity = toEntity(user);
-        
+
         if (entity.getId() == null) {
             entityManager.persist(entity); // Create
         } else {
             entity = entityManager.merge(entity); // Update
         }
-        
+
         return toDomain(entity);
     }
 
@@ -38,31 +38,31 @@ public class UserRepositoryAdapter implements UserRepositoryPort {
     @Override
     public Optional<User> findByUsername(String nickname) {
         List<UserEntity> results = entityManager
-            .createQuery("SELECT u FROM UserEntity u WHERE u.nickname = :nickname", UserEntity.class)
-            .setParameter("nickname", nickname)
-            .getResultList();
-        
+                .createQuery("SELECT u FROM UserEntity u WHERE u.nickname = :nickname", UserEntity.class)
+                .setParameter("nickname", nickname)
+                .getResultList();
+
         return results.isEmpty() ? Optional.empty() : Optional.of(toDomain(results.get(0)));
     }
 
     @Override
     public Optional<User> findByKeycloakId(String keycloakId) {
         List<UserEntity> results = entityManager
-            .createQuery("SELECT u FROM UserEntity u WHERE u.keycloakId = :keycloakId", UserEntity.class)
-            .setParameter("keycloakId", keycloakId)
-            .getResultList();
-        
+                .createQuery("SELECT u FROM UserEntity u WHERE u.keycloakId = :keycloakId", UserEntity.class)
+                .setParameter("keycloakId", keycloakId)
+                .getResultList();
+
         return results.isEmpty() ? Optional.empty() : Optional.of(toDomain(results.get(0)));
     }
 
     @Override
     public List<User> findAll() {
         return entityManager
-            .createQuery("SELECT u FROM UserEntity u", UserEntity.class)
-            .getResultList()
-            .stream()
-            .map(this::toDomain)
-            .collect(Collectors.toList());
+                .createQuery("SELECT u FROM UserEntity u", UserEntity.class)
+                .getResultList()
+                .stream()
+                .map(this::toDomain)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -76,34 +76,42 @@ public class UserRepositoryAdapter implements UserRepositoryPort {
     @Override
     public boolean existsByUsername(String nickname) {
         Long count = entityManager
-            .createQuery("SELECT COUNT(u) FROM UserEntity u WHERE u.nickname = :nickname", Long.class)
-            .setParameter("nickname", nickname)
-            .getSingleResult();
-        
+                .createQuery("SELECT COUNT(u) FROM UserEntity u WHERE u.nickname = :nickname", Long.class)
+                .setParameter("nickname", nickname)
+                .getSingleResult();
+
         return count > 0;
     }
 
     // Mapper: Entity -> Domain
     private User toDomain(UserEntity entity) {
         return new User(
-            entity.getId(),
-            entity.getFirstName(),
-            entity.getLastName(),
-            entity.getNickname(),
-            entity.getEmail(),
-            entity.getKeycloakId()
-        );
+                entity.getId(),
+                entity.getFirstName(),
+                entity.getLastName(),
+                entity.getNickname(),
+                entity.getEmail(),
+                entity.getKeycloakId());
     }
 
     // Mapper: Domain -> Entity
     private UserEntity toEntity(User user) {
         return new UserEntity(
-            user.getId(),
-            user.getFirstName(),
-            user.getLastName(),
-            user.getNickname(),
-            user.getEmail(),
-            user.getKeycloakId()
-        );
+                user.getId(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getNickname(),
+                user.getEmail(),
+                user.getKeycloakId());
+    }
+
+    @Override
+    public Optional<User> findByEmail(String email) {
+        return entityManager.createQuery("SELECT u FROM UserEntity u WHERE u.email = :email", UserEntity.class)
+                .setParameter("email", email)
+                .getResultList()
+                .stream()
+                .findFirst()
+                .map(this::toDomain);
     }
 }

@@ -12,6 +12,8 @@ public class UserInfo {
     /** Nombre de usuario */
     public String username;
 
+    public Long dbUserId; 
+
     /** Correo electrónico del usuario */
     public String email;
 
@@ -24,12 +26,14 @@ public class UserInfo {
      * @param id ID único del usuario
      * @param username nombre de usuario
      * @param email correo electrónico
+     * @param dbUserId ID del usuario en la base de datos
      * @param roles lista de roles del usuario
      */
-    public UserInfo(String id, String username, String email, List<String> roles) {
+    public UserInfo(String id, String username, String email, Long dbUserId, List<String> roles) {
         this.id = id;
         this.username = username;
         this.email = email;
+        this.dbUserId = dbUserId;
         this.roles = roles;
     }
 

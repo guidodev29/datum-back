@@ -3,12 +3,15 @@ package com.datum.infrastructure.adapter.in.rest;
 import com.datum.application.dto.DocumentResponse;
 import com.datum.application.service.PurchaseService;
 import com.datum.domain.model.Purchase;
-import com.datum.infrastructure.adapter.out.OpenKM.OpenKMService;
+import com.datum.infrastructure.adapter.out.openkm.OpenKMService;
+
+import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.jboss.resteasy.reactive.RestForm;
 import org.jboss.resteasy.reactive.multipart.FileUpload;
 
 import java.io.File;
@@ -32,12 +35,11 @@ public class PurchaseDocumentResource {
 
     // Allowed MIME types: images and PDFs
     private static final List<String> ALLOWED_MIME_TYPES = Arrays.asList(
-        "image/jpeg",
-        "image/jpg",
-        "image/png",
-        "image/heic",
-        "application/pdf"
-    );
+            "image/jpeg",
+            "image/jpg",
+            "image/png",
+            "image/heic",
+            "application/pdf");
 
     // Max file size: 10MB
     private static final long MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -49,51 +51,62 @@ public class PurchaseDocumentResource {
     @POST
     @Path("/document")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    @RolesAllowed({"employee", "administrator"})
+    @Produces(MediaType.APPLICATION_JSON)
+    @PermitAll
+    //@RolesAllowed({ "employee", "administrator" })
     public Response createPurchaseWithDocument(
-        @FormParam("idUser") Long idUser,
-        @FormParam("idFolder") Long idFolder,
-        @FormParam("idPType") Long idPType,
-        @FormParam("idPaymentMethod") Long idPaymentMethod,
-        @FormParam("idCostCenter") Long idCostCenter,
-        @FormParam("totalAmount") java.math.BigDecimal totalAmount,
-        @FormParam("description") String description,
-        @FormParam("guestName") String guestName,
-        @FormParam("purchaseDate") String purchaseDateStr,
-        @FormParam("file") FileUpload file
-    ) {
+            @RestForm("idUser") Long idUser,
+            @RestForm("idFolder") Long idFolder,
+            @RestForm("idPType") Long idPType,
+            @RestForm("idPaymentMethod") Long idPaymentMethod,
+            @RestForm("idCostCenter") Long idCostCenter,  // Now using @RestForm instead of @FormParam
+            @RestForm("totalAmount") String totalAmountStr,  // Changed to String for better parsing
+            @RestForm("description") String description,
+            @RestForm("guestName") String guestName,
+            @RestForm("purchaseDate") String purchaseDateStr,
+            @RestForm("file") FileUpload file) {
         try {
             // 1. Validate required fields
-            if (idUser == null || idFolder == null || totalAmount == null || purchaseDateStr == null) {
+            if (idUser == null || idFolder == null || totalAmountStr == null || purchaseDateStr == null) {
                 return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(new ErrorResponse("idUser, idFolder, totalAmount, and purchaseDate are required"))
-                    .build();
+                        .entity(new ErrorResponse("idUser, idFolder, totalAmount, and purchaseDate are required"))
+                        .build();
             }
 
-            // 2. Validate file is provided
+            // 2. Parse totalAmount
+            java.math.BigDecimal totalAmount;
+            try {
+                totalAmount = new java.math.BigDecimal(totalAmountStr);
+            } catch (NumberFormatException e) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity(new ErrorResponse("Invalid totalAmount format: " + totalAmountStr))
+                        .build();
+            }
+
+            // 3. Validate file is provided
             if (file == null) {
                 return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(new ErrorResponse("File is required"))
-                    .build();
+                        .entity(new ErrorResponse("File is required"))
+                        .build();
             }
 
-            // 3. Validate file size
+            // 4. Validate file size
             File uploadedFile = file.uploadedFile().toFile();
             if (uploadedFile.length() > MAX_FILE_SIZE) {
                 return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(new ErrorResponse("File size exceeds 10MB limit"))
-                    .build();
+                        .entity(new ErrorResponse("File size exceeds 10MB limit"))
+                        .build();
             }
 
-            // 4. Validate file type (images or PDF only)
+            // 5. Validate file type (images or PDF only)
             String mimeType = file.contentType();
-            if (!ALLOWED_MIME_TYPES.contains(mimeType.toLowerCase())) {
+            if (mimeType == null || !ALLOWED_MIME_TYPES.contains(mimeType.toLowerCase())) {
                 return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(new ErrorResponse("Only images (JPG, PNG, HEIC) and PDF files are allowed"))
-                    .build();
+                        .entity(new ErrorResponse("Only images (JPG, PNG, HEIC) and PDF files are allowed. Got: " + mimeType))
+                        .build();
             }
 
-            // 5. Parse purchase date (only date, time will be current moment)
+            // 6. Parse purchase date (only date, time will be current moment)
             java.time.LocalDateTime purchaseDate;
             try {
                 // Parse only the date part (e.g., "2025-10-30")
@@ -102,17 +115,16 @@ public class PurchaseDocumentResource {
                 purchaseDate = java.time.LocalDateTime.of(date, java.time.LocalTime.now());
             } catch (Exception e) {
                 return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(new ErrorResponse("Invalid purchaseDate format. Use format: 2025-10-30"))
-                    .build();
+                        .entity(new ErrorResponse("Invalid purchaseDate format. Use format: 2025-10-30. Error: " + e.getMessage()))
+                        .build();
             }
 
-            // 6. Create Purchase in database (ID will be auto-generated)
+            // 7. Create Purchase in database (ID will be auto-generated)
             Purchase purchase = new Purchase();
             purchase.setIdUser(idUser);
             purchase.setIdFolder(idFolder);
             purchase.setIdPType(idPType);
             purchase.setIdPaymentMethod(idPaymentMethod);
-            purchase.setIdCostCenter(idCostCenter);
             purchase.setTotalAmount(totalAmount);
             purchase.setDescription(description);
             purchase.setGuestName(guestName);
@@ -120,36 +132,48 @@ public class PurchaseDocumentResource {
             purchase.setValidationStatus("DRAFT");
             purchase.setCreatedDate(java.time.LocalDateTime.now());
 
+            // Handle nullable idCostCenter
+            if (idCostCenter != null && idCostCenter > 0) {
+                purchase.setIdCostCenter(idCostCenter);
+            } else {
+                purchase.setIdCostCenter(null);
+            }
+
+            System.out.println("Creating purchase: " + purchase);
             Purchase savedPurchase = purchaseService.createPurchase(purchase);
             Long generatedId = savedPurchase.getIdPurchase();
+            System.out.println("Purchase created with ID: " + generatedId);
 
-            // 7. Upload document to OpenKM
+            // 8. Upload document to OpenKM
             String fileName = file.fileName();
+            System.out.println("Uploading document: " + fileName + " to OpenKM...");
             String openkmPath = openKMService.uploadDocument(generatedId, purchaseDate, fileName, file);
+            System.out.println("Document uploaded to: " + openkmPath);
 
-            // 8. Update purchase with document path
+            // 9. Update purchase with document path
             purchaseService.attachDocument(generatedId, openkmPath);
 
-            // 9. Return success response
+            // 10. Return success response
             DocumentResponse response = DocumentResponse.success(
-                generatedId,
-                fileName,
-                mimeType,
-                uploadedFile.length(),
-                openkmPath,
-                "Purchase created and document uploaded successfully"
-            );
+                    generatedId,
+                    fileName,
+                    mimeType,
+                    uploadedFile.length(),
+                    openkmPath,
+                    "Purchase created and document uploaded successfully");
 
             return Response.status(Response.Status.CREATED).entity(response).build();
 
         } catch (IllegalArgumentException e) {
+            e.printStackTrace();
             return Response.status(Response.Status.BAD_REQUEST)
-                .entity(new ErrorResponse("Validation error: " + e.getMessage()))
-                .build();
+                    .entity(new ErrorResponse("Validation error: " + e.getMessage()))
+                    .build();
         } catch (Exception e) {
+            e.printStackTrace();
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                .entity(new ErrorResponse("Error creating purchase with document: " + e.getMessage()))
-                .build();
+                    .entity(new ErrorResponse("Error creating purchase with document: " + e.getMessage()))
+                    .build();
         }
     }
 
@@ -160,11 +184,11 @@ public class PurchaseDocumentResource {
     @POST
     @Path("/{purchaseId}/document")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    @RolesAllowed({"employee", "administrator"})
+    @PermitAll
+    //@RolesAllowed({ "employee", "administrator" })
     public Response uploadDocument(
-        @PathParam("purchaseId") Long purchaseId,
-        @FormParam("file") FileUpload file
-    ) {
+            @PathParam("purchaseId") Long purchaseId,
+            @RestForm("file") FileUpload file) {
         try {
             // 1. Validate purchase exists
             Purchase purchase = purchaseService.getPurchaseById(purchaseId);
@@ -172,24 +196,24 @@ public class PurchaseDocumentResource {
             // 2. Validate file is provided
             if (file == null) {
                 return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(new ErrorResponse("File is required"))
-                    .build();
+                        .entity(new ErrorResponse("File is required"))
+                        .build();
             }
 
             // 3. Validate file size
             File uploadedFile = file.uploadedFile().toFile();
             if (uploadedFile.length() > MAX_FILE_SIZE) {
                 return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(new ErrorResponse("File size exceeds 10MB limit"))
-                    .build();
+                        .entity(new ErrorResponse("File size exceeds 10MB limit"))
+                        .build();
             }
 
             // 4. Validate file type (images or PDF only)
             String mimeType = file.contentType();
             if (!ALLOWED_MIME_TYPES.contains(mimeType.toLowerCase())) {
                 return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(new ErrorResponse("Only images (JPG, PNG, HEIC) and PDF files are allowed"))
-                    .build();
+                        .entity(new ErrorResponse("Only images (JPG, PNG, HEIC) and PDF files are allowed"))
+                        .build();
             }
 
             // 5. Delete old document if exists
@@ -211,28 +235,27 @@ public class PurchaseDocumentResource {
 
             // 8. Return success response
             DocumentResponse response = DocumentResponse.success(
-                purchaseId,
-                fileName,
-                mimeType,
-                uploadedFile.length(),
-                openkmPath,
-                "Document uploaded successfully"
-            );
+                    purchaseId,
+                    fileName,
+                    mimeType,
+                    uploadedFile.length(),
+                    openkmPath,
+                    "Document uploaded successfully");
 
             return Response.status(Response.Status.CREATED).entity(response).build();
 
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.NOT_FOUND)
-                .entity(new ErrorResponse("Purchase not found: " + e.getMessage()))
-                .build();
+                    .entity(new ErrorResponse("Purchase not found: " + e.getMessage()))
+                    .build();
         } catch (IllegalStateException e) {
             return Response.status(Response.Status.FORBIDDEN)
-                .entity(new ErrorResponse(e.getMessage()))
-                .build();
+                    .entity(new ErrorResponse(e.getMessage()))
+                    .build();
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                .entity(new ErrorResponse("Error uploading document: " + e.getMessage()))
-                .build();
+                    .entity(new ErrorResponse("Error uploading document: " + e.getMessage()))
+                    .build();
         }
     }
 
@@ -243,7 +266,8 @@ public class PurchaseDocumentResource {
     @GET
     @Path("/{purchaseId}/document")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
-    @RolesAllowed({"employee", "administrator", "finance"})
+    @PermitAll
+    //@RolesAllowed({ "employee", "administrator", "finance" })
     public Response downloadDocument(@PathParam("purchaseId") Long purchaseId) {
         try {
             // 1. Get purchase
@@ -252,8 +276,8 @@ public class PurchaseDocumentResource {
             // 2. Check if document exists
             if (!purchase.hasDocument()) {
                 return Response.status(Response.Status.NOT_FOUND)
-                    .entity(new ErrorResponse("No document attached to this purchase"))
-                    .build();
+                        .entity(new ErrorResponse("No document attached to this purchase"))
+                        .build();
             }
 
             // 3. Download from OpenKM
@@ -264,17 +288,17 @@ public class PurchaseDocumentResource {
 
             // 5. Return file
             return Response.ok(documentBytes)
-                .header("Content-Disposition", "attachment; filename=\"" + filename + "\"")
-                .build();
+                    .header("Content-Disposition", "attachment; filename=\"" + filename + "\"")
+                    .build();
 
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.NOT_FOUND)
-                .entity(new ErrorResponse("Purchase not found: " + e.getMessage()))
-                .build();
+                    .entity(new ErrorResponse("Purchase not found: " + e.getMessage()))
+                    .build();
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                .entity(new ErrorResponse("Error downloading document: " + e.getMessage()))
-                .build();
+                    .entity(new ErrorResponse("Error downloading document: " + e.getMessage()))
+                    .build();
         }
     }
 
@@ -284,7 +308,8 @@ public class PurchaseDocumentResource {
      */
     @DELETE
     @Path("/{purchaseId}/document")
-    @RolesAllowed({"employee", "administrator"})
+    @PermitAll
+    //@RolesAllowed({ "employee", "administrator" })
     public Response deleteDocument(@PathParam("purchaseId") Long purchaseId) {
         try {
             // 1. Get purchase
@@ -305,21 +330,21 @@ public class PurchaseDocumentResource {
 
             // 4. Return success
             return Response.ok()
-                .entity(new SuccessResponse("Purchase and document deleted successfully"))
-                .build();
+                    .entity(new SuccessResponse("Purchase and document deleted successfully"))
+                    .build();
 
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.NOT_FOUND)
-                .entity(new ErrorResponse("Purchase not found: " + e.getMessage()))
-                .build();
+                    .entity(new ErrorResponse("Purchase not found: " + e.getMessage()))
+                    .build();
         } catch (IllegalStateException e) {
             return Response.status(Response.Status.FORBIDDEN)
-                .entity(new ErrorResponse(e.getMessage()))
-                .build();
+                    .entity(new ErrorResponse(e.getMessage()))
+                    .build();
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                .entity(new ErrorResponse("Error deleting purchase: " + e.getMessage()))
-                .build();
+                    .entity(new ErrorResponse("Error deleting purchase: " + e.getMessage()))
+                    .build();
         }
     }
 
@@ -337,6 +362,7 @@ public class PurchaseDocumentResource {
     // Helper classes for responses
     public static class ErrorResponse {
         public String error;
+
         public ErrorResponse(String error) {
             this.error = error;
         }
@@ -344,6 +370,7 @@ public class PurchaseDocumentResource {
 
     public static class SuccessResponse {
         public String message;
+
         public SuccessResponse(String message) {
             this.message = message;
         }

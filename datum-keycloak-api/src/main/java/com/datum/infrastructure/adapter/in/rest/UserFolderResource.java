@@ -5,6 +5,8 @@ import com.datum.application.dto.FolderResponse;
 import com.datum.application.service.PurchaseService;
 import com.datum.domain.model.Folder;
 import com.datum.domain.ports.in.FolderUseCasePort;
+
+import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
@@ -27,7 +29,8 @@ public class UserFolderResource {
     PurchaseService purchaseService;
 
     @POST
-    @RolesAllowed({"administrator", "employee"})
+    @PermitAll
+    //@RolesAllowed({"administrator", "employee"})
     public Response createFolder(
         @PathParam("userId") Long userId,
         CreateFolderRequest request
@@ -85,7 +88,8 @@ public class UserFolderResource {
 
     @PUT
     @Path("/{folderId}")
-    @RolesAllowed({"administrator", "employee"})
+    @PermitAll
+    //@RolesAllowed({"administrator", "employee"})
     public Response updateFolder(
         @PathParam("userId") Long userId,
         @PathParam("folderId") Long folderId,
@@ -115,7 +119,8 @@ public class UserFolderResource {
 
     @DELETE
     @Path("/{folderId}")
-    @RolesAllowed({"administrator", "employee"})
+    @PermitAll
+    //@RolesAllowed({"administrator", "employee"})
     public Response deleteFolder(
         @PathParam("userId") Long userId,
         @PathParam("folderId") Long folderId
@@ -238,6 +243,8 @@ public class UserFolderResource {
                 .build();
         }
     }
+
+    
 
     // Response DTOs
     public static class ErrorResponse {

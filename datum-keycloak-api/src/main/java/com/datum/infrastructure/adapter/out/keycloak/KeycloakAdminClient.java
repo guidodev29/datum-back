@@ -30,13 +30,15 @@ public interface KeycloakAdminClient {
         @PathParam("userId") String userId
     );
 
-    @GET
-    @Path("/roles/{roleName}")
-    Map<String, Object> getRoleByName(
-        @HeaderParam("Authorization") String authorization,
-        @PathParam("roleName") String roleName
-    );
-
+    //----OLD - to be deleted later ----
+    //@GET
+    //@Path("/roles/{roleName}")
+    //Map<String, Object> getRoleByName(
+    //    @HeaderParam("Authorization") String authorization,
+    //    @PathParam("roleName") String roleName
+    //);
+    //----------------------------------
+    
     @PUT
     @Path("/users/{userId}/role-mappings/realm")
     Response resetPassword(

@@ -13,6 +13,8 @@ public interface UserRepositoryPort {
     Optional<User> findByUsername(String nickname);  // Using nickname
     
     Optional<User> findByKeycloakId(String keycloakId);
+
+    Optional<User> findByEmail(String email);
     
     List<User> findAll();
     
