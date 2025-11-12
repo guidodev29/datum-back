@@ -51,12 +51,7 @@ public class UserFolderResource {
     }
 
     @GET
-<<<<<<< Updated upstream
     @RolesAllowed({"administrator", "employee", "finance"})
-=======
-    @PermitAll
-    //@RolesAllowed({"administrator", "employee"})
->>>>>>> Stashed changes
     public Response getUserFolders(@PathParam("userId") Long userId) {
         List<FolderResponse> folders = folderService.getFoldersByUserId(userId).stream()
             .map(this::toResponse)
@@ -67,12 +62,7 @@ public class UserFolderResource {
 
     @GET
     @Path("/{folderId}")
-<<<<<<< Updated upstream
     @RolesAllowed({"administrator", "employee", "finance"})
-=======
-    @PermitAll
-    //@RolesAllowed({"administrator", "employee"})
->>>>>>> Stashed changes
     public Response getFolderById(
         @PathParam("userId") Long userId,
         @PathParam("folderId") Long folderId
@@ -253,6 +243,8 @@ public class UserFolderResource {
                 .build();
         }
     }
+
+    
 
     // Response DTOs
     public static class ErrorResponse {

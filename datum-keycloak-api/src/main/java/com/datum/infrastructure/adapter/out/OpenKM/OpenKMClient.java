@@ -1,4 +1,4 @@
-package com.datum.infrastructure.adapter.out.OpenKM;
+package com.datum.infrastructure.adapter.out.openkm;
 
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;

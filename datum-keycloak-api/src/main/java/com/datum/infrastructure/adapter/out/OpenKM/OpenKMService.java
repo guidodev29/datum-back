@@ -1,4 +1,4 @@
-package com.datum.infrastructure.adapter.out.OpenKM;
+package com.datum.infrastructure.adapter.out.openkm;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -148,6 +148,37 @@ public class OpenKMService {
             }
         } catch (Exception e) {
             throw new RuntimeException("Error deleting document from OpenKM: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Update a document in OpenKM (delete old and upload new)
+     *
+     * @param oldDocPath Old document path in OpenKM (to delete)
+     * @param purchaseId ID of the purchase
+     * @param purchaseDate Date of the purchase (to extract year/month)
+     * @param fileName Name of the new file
+     * @param fileUpload New file to upload
+     * @return Full document path in OpenKM of the new file
+     * @throws RuntimeException if update fails
+     */
+    public String updateDocument(String oldDocPath, Long purchaseId, java.time.LocalDateTime purchaseDate, String fileName, FileUpload fileUpload) {
+        try {
+            // 1. Delete old document if exists
+            if (oldDocPath != null && !oldDocPath.isEmpty()) {
+                try {
+                    deleteDocument(oldDocPath);
+                } catch (Exception e) {
+                    // Log but continue - old document might already be deleted
+                    System.err.println("Warning: Could not delete old document: " + e.getMessage());
+                }
+            }
+
+            // 2. Upload new document
+            return uploadDocument(purchaseId, purchaseDate, fileName, fileUpload);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Error updating document in OpenKM: " + e.getMessage(), e);
         }
     }
 

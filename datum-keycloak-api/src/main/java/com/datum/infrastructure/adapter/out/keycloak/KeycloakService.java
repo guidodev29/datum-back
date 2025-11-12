@@ -116,7 +116,7 @@ public class KeycloakService {
         Response roleResponse = keycloakAdminClient.assignRole(
             authHeader,
             userId,
-            List.of(employeeRole)
+            List.of(roleRepresentation)
         );
 
         System.out.println("Role assignment status for '" + roleName + "': " + roleResponse.getStatus());
